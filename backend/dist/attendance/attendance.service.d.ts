@@ -6,10 +6,12 @@ import { CheckOutDto } from './dto/check-out.dto';
 export declare class AttendanceService {
     private attendanceRepository;
     private usersRepository;
+    private uploadsDir;
     constructor(attendanceRepository: Repository<Attendance>, usersRepository: Repository<User>);
     private calculateDistance;
     private determineStatus;
     private determineCheckOutStatus;
+    private savePhoto;
     checkIn(userId: number, checkInDto: CheckInDto): Promise<Attendance>;
     checkOut(userId: number, checkOutDto: CheckOutDto): Promise<Attendance>;
     getTodayAttendance(userId: number): Promise<Attendance | null>;

@@ -71,6 +71,8 @@ let AuthService = class AuthService {
             name,
             employee_id: employeeId,
             department: department || 'Umum',
+            office_latitude: -6.949875,
+            office_longitude: 107.662165,
         });
         await this.usersRepository.save(user);
         const token = this.jwtService.sign({ sub: user.id, email: user.email });
