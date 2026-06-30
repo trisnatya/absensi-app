@@ -4,9 +4,10 @@
   "description": "Absensi Karyawan Backend with NestJS",
   "main": "dist/main.js",
   "scripts": {
+    "prebuild": "rm -rf dist",
     "build": "tsc",
     "start": "node dist/main.js",
-    "dev": "ts-node src/main.ts"
+    "start:dev": "ts-node src/main.ts"
   },
   "keywords": [
     "nestjs",
