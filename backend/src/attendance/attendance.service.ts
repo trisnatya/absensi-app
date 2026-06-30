@@ -5,15 +5,24 @@ import { Attendance } from './entities/attendance.entity';
 import { User } from '../users/entities/user.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import { CheckOutDto } from './dto/check-out.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AttendanceService {
+  private uploadsDir: string;
+
   constructor(
     @InjectRepository(Attendance)
     private attendanceRepository: Repository<Attendance>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+  ) {
+    this.uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(this.uploadsDir)) {
+      fs.mkdirSync(this.uploadsDir, { recursive: true });
+    }
+  }
 
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371e3;
@@ -50,6 +59,15 @@ export class AttendanceService {
     return checkMinutes < endMinutes ? 'pulang_awal' : 'tepat_waktu';
   }
 
+  private savePhoto(base64Data: string, prefix: string): string {
+    const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Image, 'base64');
+    const filename = `${prefix}_${Date.now()}.jpg`;
+    const filepath = path.join(this.uploadsDir, filename);
+    fs.writeFileSync(filepath, buffer);
+    return `/uploads/${filename}`;
+  }
+
   async checkIn(userId: number, checkInDto: CheckInDto): Promise<Attendance> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -81,10 +99,11 @@ export class AttendanceService {
     }
 
     const status = this.determineStatus(currentTime, user.work_start);
+    const photoUrl = this.savePhoto(checkInDto.photo, `checkin_${userId}`);
 
     if (existingAttendance) {
       existingAttendance.check_in_time = currentTime;
-      existingAttendance.check_in_photo = checkInDto.photo;
+      existingAttendance.check_in_photo = photoUrl;
       existingAttendance.check_in_latitude = checkInDto.latitude;
       existingAttendance.check_in_longitude = checkInDto.longitude;
       existingAttendance.check_in_status = status;
@@ -95,7 +114,7 @@ export class AttendanceService {
       user_id: userId,
       date: today,
       check_in_time: currentTime,
-      check_in_photo: checkInDto.photo,
+      check_in_photo: photoUrl,
       check_in_latitude: checkInDto.latitude,
       check_in_longitude: checkInDto.longitude,
       check_in_status: status,
@@ -139,9 +158,10 @@ export class AttendanceService {
     }
 
     const status = this.determineCheckOutStatus(currentTime, user.work_end);
+    const photoUrl = this.savePhoto(checkOutDto.photo, `checkout_${userId}`);
 
     attendance.check_out_time = currentTime;
-    attendance.check_out_photo = checkOutDto.photo;
+    attendance.check_out_photo = photoUrl;
     attendance.check_out_latitude = checkOutDto.latitude;
     attendance.check_out_longitude = checkOutDto.longitude;
     attendance.check_out_status = status;

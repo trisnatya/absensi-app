@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,12 +20,16 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
   }));
 
+  // Serve static files from uploads folder
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`🚀 Backend running on http://localhost:${port}`);
   console.log(`📚 API available at http://localhost:${port}/api`);
+  console.log(`📷 Photos available at http://localhost:${port}/uploads`);
 }
 
 bootstrap();
